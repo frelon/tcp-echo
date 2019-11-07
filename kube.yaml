@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp-echo-deploy
+  labels:
+    app: tcp-echo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tcp-echo
+  template:
+    metadata:
+      labels:
+        app: tcp-echo
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      imagePullSecrets:
+       - name: harbor-registry
+      containers:
+      - name: echo
+        image: <image>
+        ports:
+        - containerPort: 7777
+        args:
+        - --port=7777
+        - -logtostderr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tcp-echo-svc
+spec:
+  selector:
+    app: tcp-echo
+  ports:
+  - protocol: TCP
+    port: 7777
+    targetPort: 7777
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: echo-cert
+spec:
+  secretName: echo-tls
+  commonName: test.example.org
+  dnsNames:
+  - test.example.org
+  issuerRef:
+    name: ca-issuer
+    kind: ClusterIssuer
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: tcp-echo-route
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: HostSNI(`test.example.org`)
+    services:
+    - name: tcp-echo-svc
+      port: 7777
+  tls:
+    secretName: echo-tls

@@ -38,7 +38,9 @@ func handleConnection(connection net.Conn) {
 	for {
 		select {
 		case data := <-ch:
-			connection.Write(data)
+			host, _ := os.Hostname()
+			message := fmt.Sprintf("%v: %v", host, string(data))
+			connection.Write([]byte(message))
 			break
 		case err := <-errorCh:
 			glog.Errorf("Error receiving: %v", err)
