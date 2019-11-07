@@ -20,7 +20,7 @@ spec:
        - name: harbor-registry
       containers:
       - name: echo
-        image: <image>
+        image: frallan/tcp-echo:0.3
         ports:
         - containerPort: 7777
         args:
